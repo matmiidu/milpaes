@@ -20,4 +20,6 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uv run alembic upgrade head && uv run uvicorn paes_api.main:app --host 0.0.0.0 --port 8000"]
+# Binarios del venv directo: uv quedó instalado en /root/.local/bin, que
+# appuser no puede leer (Render cortaba con "Exited with status 127").
+CMD ["sh", "-c", ".venv/bin/alembic upgrade head && .venv/bin/uvicorn paes_api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
