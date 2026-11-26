@@ -96,6 +96,35 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def _mantener_despierto() -> None:
+    """Hosting temporal en Render (plan gratis): un servicio sin visitas por
+    15 minutos se duerme y la siguiente visita espera ~1 minuto. Si
+    KEEPALIVE_URLS trae direcciones, se visitan cada 10 minutos para que la
+    web y la API sigan despiertas. Sin la variable no hace nada."""
+    import os
+    import threading
+    import time
+    import urllib.request
+
+    urls = [u.strip() for u in os.environ.get("KEEPALIVE_URLS", "").split(",") if u.strip()]
+    if not urls:
+        return
+
+    def _bucle() -> None:
+        while True:
+            time.sleep(600)
+            for url in urls:
+                try:
+                    urllib.request.urlopen(url, timeout=90).read(64)
+                except Exception:
+                    pass
+
+    threading.Thread(target=_bucle, daemon=True, name="keepalive").start()
+
+
+_mantener_despierto()
+
+
 def main() -> None:
     import uvicorn
 
